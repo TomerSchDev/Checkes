@@ -56,92 +56,31 @@ public class Pawn implements Piece {
      */
     @Override
     public ArrayList<Place> moveSet( Piece[][] table ) {
+        ArrayList<Place> moveSet = new ArrayList<>();
         int row = this.place.getRow();
         int col = this.place.getCol();
-        ArrayList<Place> moveSet = new ArrayList<>();
-        if (!this.isPlayerBlack) {
-            if (row != 0) {
-                if (table[row - 1][col] == null) {
-                    moveSet.add(new Place(row - 1, col));
-                    if (firstMove) {
-                        if (table[row - 2][col] == null) {
-                            moveSet.add(new Place(row - 2, col));
-                        }
-                    }
-                }
-                if (col != 0 && table[row - 1][col - 1] != null && table[row - 1][col - 1].getPlayerBlack()) {
-                    moveSet.add(new Place(row - 1, col - 1));
-                }
-                if (col != 7 && table[row - 1][col + 1] != null && table[row - 1][col + 1].getPlayerBlack()) {
-                    moveSet.add(new Place(row - 1, col + 1));
+        int advance = -1;
+        if (this.isPlayerBlack) {
+            advance = 1;
+        }
+        if (row != 0 && row != 7) {
+            if (table[row + advance][col] == null) {
+                moveSet.add(new Place(row + advance, col));
+                if (table[row + (2 * advance)][col] == null) {
+                    moveSet.add(new Place(row + (2 * advance), col));
                 }
             }
-        } else {
-            if (row != 7) {
-                if (table[row + 1][col] == null) {
-                    moveSet.add(new Place(row + 1, col));
-                    if (firstMove) {
-                        if (table[row + 2][col] == null) {
-                            moveSet.add(new Place(row + 2, col));
-                            if (col != 0) {
-                                if (table[row + 1][col - 1] != null) {
-                                    if (!table[row + 1][col - 1].getPlayerBlack()) {
-                                        moveSet.add(new Place(row + 1, col - 1));
-                                    }
-                                }
-                            }
-                        } else {
-                            if (col != 0) {
-                                if (table[row + 1][col + 1] != null) {
-                                    if (!table[row + 1][col + 1].getPlayerBlack()) {
-                                        moveSet.add(new Place(row + 1, col - 1));
-                                    }
-                                }
-                            }
-                        }
-                        if (col != 7) {
-                            if (table[row + 1][col + 1] != null) {
-                                if (!table[row + 1][col + 1].getPlayerBlack()) {
-                                    moveSet.add(new Place(row + 1, col + 1));
-                                }
-                            }
-                        }
-                    } else {
-                        if (col != 0) {
-                            if (table[row + 1][col + 1] != null) {
-                                if (!table[row + 1][col + 1].getPlayerBlack()) {
-                                    moveSet.add(new Place(row + 1, col - 1));
-                                    if (col != 7 && null != table[row + 1][col + 1] &&
-                                            !table[row + 1][col + 1].getPlayerBlack()) {
-                                        moveSet.add(new Place(row + 1, col + 1));
-                                    }
-                                } else {
-                                    if (!((table[row + 1][col + 1] == null) || (col == 7)
-                                            || table[row + 1][col + 1].getPlayerBlack())) {
-                                        moveSet.add(new Place(row + 1, col + 1));
-                                    }
-                                }
-                            } else {
-                                if (!((table[row + 1][col + 1] == null) || (col == 7)
-                                        || table[row + 1][col + 1].getPlayerBlack())) {
-                                    moveSet.add(new Place(row + 1, col + 1));
-                                }
-                            }
-                        } else {
-                            if (!((table[row + 1][col + 1] == null) || (col == 7)
-                                    || table[row + 1][col + 1].getPlayerBlack())) {
-                                moveSet.add(new Place(row + 1, col + 1));
-                            }
-                        }
+            if (col != 0) {
+                if (table[row + advance][col - 1] != null) {
+                    if (table[row + advance][col - 1].getPlayerBlack()) {
+                        moveSet.add(new Place(row + advance, col - 1));
                     }
-                } else {
-                    if (!(table[row + 1][col - 1] == null)) {
-                        if ((col != 0) && !table[row + 1][col + 1].getPlayerBlack()) {
-                            moveSet.add(new Place(row + 1, col - 1));
-                        }
-                    }
-                    if (col != 7 && table[row + 1][col + 1] != null && !table[row + 1][col + 1].getPlayerBlack()) {
-                        moveSet.add(new Place(row + 1, col + 1));
+                }
+            }
+            if (col != 7) {
+                if (table[row + advance][col + 1] != null) {
+                    if (table[row + advance][col + 1].getPlayerBlack()) {
+                        moveSet.add(new Place(row + advance, col + 1));
                     }
                 }
             }

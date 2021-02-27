@@ -27,7 +27,7 @@ public abstract class GeneralPiece {
      *
      * @return the piece [ ] [ ]
      */
-    public static Piece[][] getBoardPieces(ArrayList<Piece> pieces) {
+    public static Piece[][] getBoardPieces( ArrayList<Piece> pieces ) {
         Piece[][] board = new Piece[8][8];
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
@@ -43,43 +43,227 @@ public abstract class GeneralPiece {
     }
 
     /**
-     * Gets pieces from board.
+     * Is it still check boolean.
      *
-     * @param board the board
+     * @param pieces        the pieces
+     * @param selectedPiece the selected piece
+     * @param selectedPlace the selected place
      *
-     * @return the pieces from board
+     * @return the boolean
      */
-    public static ArrayList<Piece> getPiecesFromBoard(Piece[][] board) {
-        ArrayList<Piece> pieces = new ArrayList<>();
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                if (board[i][j] != null) {
-                    pieces.add(board[i][j]);
-                    board[i][j] = null;
+    public static boolean isItStillCheck( ArrayList<Piece> pieces, Piece selectedPiece, Place selectedPlace ) {
+        Piece[][] board = GeneralPiece.getBoardPieces(pieces);
+        ArrayList<Piece> threadedPieces = new ArrayList<>();
+        for (Piece piece : pieces) {
+            if (selectedPiece == null) {
+                return false;
+            }
+            ArrayList<Piece> pieceArrayList = getPiecesThreaded(pieces, piece);
+            for (Piece p : pieceArrayList) {
+                if (p.getType() == 'K' && p.getPlayerBlack() == selectedPiece.getPlayerBlack()) {
+                    pieceArrayList.add(piece);
                 }
             }
         }
-        return pieces;
+        Place oldPlace = selectedPiece.getPlace();
+        Piece pieceInOldPlace = board[selectedPlace.getRow()][selectedPlace.getCol()];
+        for (Piece piece : threadedPieces) {
+            if (piece.getPlace().equals(selectedPlace)) {
+                return false;
+            }
+            board[selectedPlace.getRow()][selectedPlace.getCol()] = selectedPiece;
+            ArrayList<Piece> piecesThreaded = getPiecesThreaded(pieces, piece);
+            for (Piece p : piecesThreaded) {
+                if (p.getType() == 'K' && selectedPiece.getPlayerBlack() == p.getPlayerBlack()) {
+                    return true;
+                }
+            }
+            board[oldPlace.getRow()][oldPlace.getCol()] = pieceInOldPlace;
+        }
+        return false;
+    }
+
+    /**
+     * Evaluate double.
+     *
+     * @param pieces  the pieces
+     * @param isBlack the is black
+     *
+     * @return the double
+     */
+    public static double evaluate( ArrayList<Piece> pieces, boolean isBlack ) {
+        double score = 0;
+        for (Piece piece : pieces) {
+            int value = 1;
+            if (isBlack != piece.getPlayerBlack()) {
+                value = -1;
+            }
+            score += value * piece.getPoints();
+        }
+        return score;
+    }
+
+    /**
+     * Go straight line array list.
+     *
+     * @param pieces the pieces
+     * @param piece  the piece
+     *
+     * @return the array list
+     */
+    public static ArrayList<Place> goStraightLine( ArrayList<Piece> pieces, Piece piece ) {
+        ArrayList<Place> places = new ArrayList<>();
+        Place place = piece.getPlace();
+        int row = place.getRow();
+        int col = place.getCol();
+        for (int i = 0; i < 8; i++) {
+            if (col + i < 8) {
+                Place newPlace = new Place(row, col + i);
+                Piece pieceBoard = findPieceByPlace(pieces, newPlace);
+                if (pieceBoard == null || pieceBoard.getPlayerBlack() != piece.getPlayerBlack()) {
+                    places.add(newPlace);
+                }
+            }
+            if (col - i > -1) {
+                Place newPlace = new Place(row, col - i);
+                Piece pieceBoard = findPieceByPlace(pieces, newPlace);
+                if (pieceBoard == null || pieceBoard.getPlayerBlack() != piece.getPlayerBlack()) {
+                    places.add(newPlace);
+                }
+            }
+            if (row + i < 8) {
+                Place newPlace = new Place(row + i, col);
+                Piece pieceBoard = findPieceByPlace(pieces, newPlace);
+                if (pieceBoard == null || pieceBoard.getPlayerBlack() != piece.getPlayerBlack()) {
+                    places.add(newPlace);
+                }
+            }
+            if (row - i > -1) {
+                Place newPlace = new Place(row - i, col);
+                Piece pieceBoard = findPieceByPlace(pieces, newPlace);
+                if (pieceBoard == null || pieceBoard.getPlayerBlack() != piece.getPlayerBlack()) {
+                    places.add(newPlace);
+                }
+            }
+        }
+        return places;
+    }
+
+    /**
+     * Go diagnose line array list.
+     *
+     * @param pieces the pieces
+     * @param piece  the piece
+     *
+     * @return the array list
+     */
+    public static ArrayList<Place> goDiagnoseLine( ArrayList<Piece> pieces, Piece piece ) {
+        ArrayList<Place> places = new ArrayList<>();
+        Place placePiece = piece.getPlace();
+        int row = placePiece.getRow();
+        int col = placePiece.getCol();
+        for (int i = 0; i < 8; i++) {
+            if (row - i > -1 && col - i > -1) {
+                Place place = new Place(row - i, col - i);
+                Piece pieceBoard = findPieceByPlace(pieces, place);
+                if (pieceBoard == null || pieceBoard.getPlayerBlack() != piece.getPlayerBlack()) {
+                    places.add(new Place(row - i, col - i));
+                }
+            }
+            if (row + i < 8 && col + i < 8) {
+                Place place = new Place(row + i, col + i);
+                Piece pieceBoard = findPieceByPlace(pieces, place);
+                if (pieceBoard == null || pieceBoard.getPlayerBlack() != piece.getPlayerBlack()) {
+                    places.add(new Place(row + i, col + i));
+                }
+            }
+            if (row + i < 8 && col - i > -1) {
+                Place place = new Place(row + i, col - i);
+                Piece pieceBoard = findPieceByPlace(pieces, place);
+                if (pieceBoard == null || pieceBoard.getPlayerBlack() != piece.getPlayerBlack()) {
+                    places.add(new Place(row + i, col - i));
+                }
+            }
+            if (row - i > -1 && col + i < 8) {
+                Place place = new Place(row - i, col + i);
+                Piece pieceBoard = findPieceByPlace(pieces, place);
+                if (pieceBoard == null || pieceBoard.getPlayerBlack() != piece.getPlayerBlack()) {
+                    places.add(new Place(row - i, col + i));
+                }
+            }
+
+
+        }
+        return places;
+    }
+
+
+    /**
+     * Copy list array list.
+     *
+     * @param pieces the pieces
+     *
+     * @return the array list
+     */
+    public static ArrayList<Piece> copyList( ArrayList<Piece> pieces ) {
+        ArrayList<Piece> copyList = new ArrayList<>();
+        for (Piece piece : pieces) {
+            copyList.add(createPiece(piece.getPlace(), piece.getPlayerBlack(), piece.getType()));
+        }
+        return copyList;
+    }
+
+    /**
+     * Gets color pieces.
+     *
+     * @param pieces  the pieces
+     * @param isBlack the is black
+     *
+     * @return the color pieces
+     */
+    public static ArrayList<Piece> getColorPieces( ArrayList<Piece> pieces, boolean isBlack ) {
+        ArrayList<Piece> piecesColor = new ArrayList<>();
+        for (Piece piece : pieces) {
+            if (piece.getPlayerBlack() == isBlack) {
+                piecesColor.add(piece);
+            }
+        }
+        return piecesColor;
+    }
+
+    /**
+     * Is two pieces equal boolean.
+     *
+     * @param piece1 the piece 1
+     * @param piece2 the piece 2
+     *
+     * @return the boolean
+     */
+    public static boolean isTwoPiecesEqual( Piece piece1, Piece piece2 ) {
+        return ((piece1.getType() == piece2.getType()) && (piece1.getPlayerBlack() == piece2.getPlayerBlack()) &&
+                (piece1.getPlace().equals(piece2.getPlace())));
     }
 
     /**
      * Gets p laces threaded.
      *
-     * @param table the table
-     * @param piece the piece
+     * @param pieces the pieces
+     * @param piece  the piece
      *
      * @return the p laces threaded
      */
-    public static ArrayList<Piece> getPLacesThreaded(Piece[][] table, Piece piece) {
-        ArrayList<Place> movesSet = piece.moveSet(table);
+    public static ArrayList<Piece> getPiecesThreaded( ArrayList<Piece> pieces, Piece piece ) {
+        ArrayList<Place> movesSet = piece.moveSet(pieces);
         ArrayList<Piece> threadedPieces = new ArrayList<>();
-        for (Place p : movesSet) {
-            if (table[p.getRow()][p.getCol()] != null) {
-                threadedPieces.add(table[p.getRow()][p.getCol()]);
+        for (Place place : movesSet) {
+            Piece p = GeneralPiece.findPieceByPlace(pieces, place);
+            if (p != null) {
+                threadedPieces.add(p);
             }
         }
         return threadedPieces;
     }
+
 
     /**
      * Init pieces array list.
@@ -146,7 +330,7 @@ public abstract class GeneralPiece {
      *
      * @return the piece
      */
-    public static Piece findPieceByPlace(ArrayList<Piece> pieces, Place p) {
+    public static Piece findPieceByPlace( ArrayList<Piece> pieces, Place p ) {
         for (Piece piece : pieces) {
             if (piece.getPlace().equals(p)) {
                 return piece;
@@ -164,7 +348,7 @@ public abstract class GeneralPiece {
      *
      * @return the piece
      */
-    public static Piece createPiece(Place place, boolean isPlayerBlack, char type) {
+    public static Piece createPiece( Place place, boolean isPlayerBlack, char type ) {
         int imageIndex = 0;
         if (!isPlayerBlack) {
             imageIndex = 6;
@@ -225,7 +409,7 @@ public abstract class GeneralPiece {
      *
      * @return the image
      */
-    public static Image readImage(File file) {
+    public static Image readImage( File file ) {
         Image image = null;
         try {
             InputStream inputStream = new FileInputStream(file);

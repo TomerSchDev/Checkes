@@ -10,11 +10,11 @@ public interface Piece {
     /**
      * Move set array list.
      *
-     * @param table the table
+     * @param pieces the pieces
      *
      * @return the array list
      */
-    ArrayList<Place> moveSet(Piece[][] table);
+    ArrayList<Place> moveSet(ArrayList<Piece>pieces);
 
     /**
      * Gets player black.
@@ -43,6 +43,13 @@ public interface Piece {
      * @param place the place
      */
     void move(Place place);
+
+    /**
+     * Gets points.
+     *
+     * @return the points
+     */
+    double getPoints();
 
     /**
      * Render piece.

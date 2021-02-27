@@ -27,6 +27,10 @@ public class Knight implements Piece {
      * The Image.
      */
     private final Image image;
+    /**
+     * The Points.
+     */
+    private double points;
 
     /**
      * Instantiates a new Knight.
@@ -35,11 +39,12 @@ public class Knight implements Piece {
      * @param isPlayerBlack the is player black
      * @param image         the image
      */
-    public Knight(Place place, Boolean isPlayerBlack, Image image) {
+    public Knight( Place place, Boolean isPlayerBlack, Image image ) {
         this.place = place;
         this.isPlayerBlack = isPlayerBlack;
         this.image = image;
         this.type = 'N';
+        this.points = 3.2;
     }
 
     /**
@@ -47,67 +52,84 @@ public class Knight implements Piece {
      *
      * @param t the t
      */
-    public void changeType(char t) {
+    public void changeType( char t ) {
         this.type = t;
     }
 
     /**
      * Move set array list.
      *
-     * @param table the table
+     * @param pieces the pieces
      *
      * @return the array list
      */
     @Override
-    public ArrayList<Place> moveSet(Piece[][] table) {
+    public ArrayList<Place> moveSet( ArrayList<Piece> pieces ) {
         ArrayList<Place> moves = new ArrayList<>();
         int row = this.place.getRow();
         int col = this.place.getCol();
+
         if (row + 2 < 8) {
             if (col + 1 < 8) {
-                if (table[row + 2][col + 1] == null || table[row + 2][col + 1].getPlayerBlack() != this.isPlayerBlack) {
-                    moves.add(new Place(row + 2, col + 1));
+                Place place = new Place(row + 2, col + 1);
+                Piece piece = GeneralPiece.findPieceByPlace(pieces, place);
+                if (piece == null || piece.getPlayerBlack() != this.isPlayerBlack) {
+                    moves.add(place);
                 }
             }
             if (col - 1 >= 0) {
-                if (table[row + 2][col - 1] == null || table[row + 2][col - 1].getPlayerBlack() != this.isPlayerBlack) {
-                    moves.add(new Place(row + 2, col - 1));
+                Place place = new Place(row + 2, col - 1);
+                Piece piece = GeneralPiece.findPieceByPlace(pieces, place);
+                if (piece == null || piece.getPlayerBlack() != this.isPlayerBlack) {
+                    moves.add(place);
                 }
             }
         }
         if (row - 2 >= 0) {
             if (col + 1 < 8) {
-                if (table[row - 2][col + 1] == null || table[row - 2][col + 1].getPlayerBlack() != this.isPlayerBlack) {
-                    moves.add(new Place(row - 2, col + 1));
+                Place place = new Place(row - 2, col + 1);
+                Piece piece = GeneralPiece.findPieceByPlace(pieces, place);
+                if (piece == null || piece.getPlayerBlack() != this.isPlayerBlack) {
+                    moves.add(place);
                 }
             }
             if (col - 1 >= 0) {
-                if (table[row - 2][col - 1] == null || table[row - 2][col - 1].getPlayerBlack() != this.isPlayerBlack) {
-                    moves.add(new Place(row - 2, col - 1));
+                Place place = new Place(row - 2, col - 1);
+                Piece piece = GeneralPiece.findPieceByPlace(pieces, place);
+                if (piece == null || piece.getPlayerBlack() != this.isPlayerBlack) {
+                    moves.add(place);
                 }
             }
         }
         if (col + 2 < 8) {
             if (row + 1 < 8) {
-                if (table[row + 1][col + 2] == null || table[row + 1][col + 2].getPlayerBlack() != this.isPlayerBlack) {
-                    moves.add(new Place(row + 1, col + 2));
+                Place place = new Place(row + 1, col + 2);
+                Piece piece = GeneralPiece.findPieceByPlace(pieces, place);
+                if (piece == null || piece.getPlayerBlack() != this.isPlayerBlack) {
+                    moves.add(place);
                 }
             }
             if (row - 1 >= 0) {
-                if (table[row - 1][col + 2] == null || table[row - 1][col + 2].getPlayerBlack() != this.isPlayerBlack) {
-                    moves.add(new Place(row - 1, col + 2));
+                Place place = new Place(row - 1, col + 2);
+                Piece piece = GeneralPiece.findPieceByPlace(pieces, place);
+                if (piece == null || piece.getPlayerBlack() != this.isPlayerBlack) {
+                    moves.add(place);
                 }
             }
         }
         if (col - 2 >= 0) {
             if (row + 1 < 8) {
-                if (table[row + 1][col - 2] == null || table[row + 1][col - 2].getPlayerBlack() != this.isPlayerBlack) {
-                    moves.add(new Place(row + 1, col - 2));
+                Place place = new Place(row + 1, col - 2);
+                Piece piece = GeneralPiece.findPieceByPlace(pieces, place);
+                if (piece == null || piece.getPlayerBlack() != this.isPlayerBlack) {
+                    moves.add(place);
                 }
             }
             if (row - 1 >= 0) {
-                if (table[row - 1][col - 2] == null || table[row - 1][col - 2].getPlayerBlack() != this.isPlayerBlack) {
-                    moves.add(new Place(row - 1, col - 2));
+                Place place = new Place(row - 1, col - 2);
+                Piece piece = GeneralPiece.findPieceByPlace(pieces, place);
+                if (piece == null || piece.getPlayerBlack() != this.isPlayerBlack) {
+                    moves.add(place);
                 }
             }
         }
@@ -150,8 +172,18 @@ public class Knight implements Piece {
      * @param place the place
      */
     @Override
-    public void move(Place place) {
+    public void move( Place place ) {
         this.place = place;
+    }
+
+    /**
+     * Gets points.
+     *
+     * @return the points
+     */
+    @Override
+    public double getPoints() {
+        return 0;
     }
 
     /**
@@ -160,7 +192,7 @@ public class Knight implements Piece {
      * @param graphics the graphics
      */
     @Override
-    public void renderPiece(Graphics graphics) {
+    public void renderPiece( Graphics graphics ) {
         int row = this.place.getRow();
         int col = this.place.getCol();
         graphics.drawImage(this.image, col * Setting.CELL_WIDTH + 15, row * Setting.CELL_HEIGHT, null);

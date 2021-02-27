@@ -12,6 +12,10 @@ import java.util.ArrayList;
  */
 public class Queen implements Piece {
     /**
+     * The Points.
+     */
+    private double points;
+    /**
      * The Place.
      */
     private Place place;
@@ -39,117 +43,26 @@ public class Queen implements Piece {
      * @param playerBlack the player black
      * @param image       the image
      */
-    public Queen(Place place, Boolean playerBlack, Image image) {
+    public Queen( Place place, Boolean playerBlack, Image image ) {
         this.type = 'Q';
         this.place = place;
         this.isPlayerBlack = playerBlack;
         this.image = image;
+        this.points = 9;
     }
 
     /**
      * Move set array list.
      *
-     * @param table the table
+     * @param pieces the pieces
      *
      * @return the array list
      */
     @Override
-    public ArrayList<Place> moveSet(Piece[][] table) {
+    public ArrayList<Place> moveSet( ArrayList<Piece> pieces ) {
         ArrayList<Place> places = new ArrayList<>();
-        int row = this.place.getRow();
-        int col = this.place.getCol();
-        for (int i = col + 1; i < 8; i++) {
-            if (table[row][i] == null) {
-                places.add(new Place(row, i));
-            } else {
-                if (table[row][i].getPlayerBlack() != this.isPlayerBlack) {
-                    places.add(new Place(row, i));
-                }
-                break;
-            }
-        }
-        for (int i = col - 1; i > -1; i--) {
-            if (table[row][i] == null) {
-                places.add(new Place(row, i));
-            } else {
-                if (table[row][i].getPlayerBlack() != this.isPlayerBlack) {
-                    places.add(new Place(row, i));
-                }
-                break;
-            }
-        }
-        for (int i = row + 1; i < 8; i++) {
-            if (table[i][col] == null) {
-                places.add(new Place(i, col));
-            } else {
-                if (table[i][col].getPlayerBlack() != this.isPlayerBlack) {
-                    places.add(new Place(i, col));
-                }
-                break;
-            }
-        }
-        for (int i = row - 1; i > -1; i--) {
-            if (table[i][col] == null) {
-                places.add(new Place(i, col));
-            } else {
-                if (table[i][col].getPlayerBlack() != this.isPlayerBlack) {
-                    places.add(new Place(i, col));
-                }
-                break;
-            }
-        }
-        for (int i = 1; i < 8; i++) {
-            if (row + i >= 8 || col + i >= 8) {
-                break;
-            }
-            if (table[row + i][col + i] == null) {
-                places.add(new Place(row + i, col + i));
-            } else {
-                if (table[row + i][col + i].getPlayerBlack() != this.isPlayerBlack) {
-                    places.add(new Place(row + i, col + i));
-                }
-                break;
-            }
-        }
-        for (int i = 1; i < 8; i++) {
-            if (row - i < 0 || col - i < 0) {
-                break;
-            }
-            if (table[row - i][col - i] == null) {
-                places.add(new Place(row - i, col - i));
-            } else {
-                if (table[row - i][col - i].getPlayerBlack() != this.isPlayerBlack) {
-                    places.add(new Place(row - i, col - i));
-                }
-                break;
-            }
-        }
-        for (int i = 1; i < 8; i++) {
-            if (row - i < 0 || col + i >= 8) {
-                break;
-            }
-            if (table[row - i][col + i] == null) {
-                places.add(new Place(row - i, col + i));
-            } else {
-                if (table[row - i][col + i].getPlayerBlack() != this.isPlayerBlack) {
-                    places.add(new Place(row - i, col + i));
-                }
-                break;
-            }
-        }
-        for (int i = 1; i < 8; i++) {
-            if (row + i >= 8 || col - i < 0) {
-                break;
-            }
-            if (table[row + i][col - i] == null) {
-                places.add(new Place(row + i, col - i));
-            } else {
-                if (table[row + i][col - i].getPlayerBlack() != this.isPlayerBlack) {
-                    places.add(new Place(row + i, col - i));
-                }
-                break;
-            }
-        }
+        places.addAll(GeneralPiece.goStraightLine(pieces, this));
+        places.addAll(GeneralPiece.goDiagnoseLine(pieces, this));
         return places;
     }
 
@@ -189,9 +102,19 @@ public class Queen implements Piece {
      * @param place the place
      */
     @Override
-    public void move(Place place) {
+    public void move( Place place ) {
         this.place = place;
         this.timesMoves++;
+    }
+
+    /**
+     * Gets points.
+     *
+     * @return the points
+     */
+    @Override
+    public double getPoints() {
+        return 0;
     }
 
     /**
@@ -200,7 +123,7 @@ public class Queen implements Piece {
      * @param graphics the graphics
      */
     @Override
-    public void renderPiece(Graphics graphics) {
+    public void renderPiece( Graphics graphics ) {
         int row = this.place.getRow();
         int col = this.place.getCol();
         graphics.drawImage(this.image, col * Setting.CELL_WIDTH + 15, row * Setting.CELL_HEIGHT, null);

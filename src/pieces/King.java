@@ -12,6 +12,10 @@ import java.util.ArrayList;
  */
 public class King implements Piece {
     /**
+     * The Points.
+     */
+    private double points;
+    /**
      * The Place.
      */
     private Place place;
@@ -43,24 +47,25 @@ public class King implements Piece {
      * @param isPlayerBlack the is player black
      * @param image         the image
      */
-    public King(Place place, Boolean isPlayerBlack, Image image) {
+    public King( Place place, Boolean isPlayerBlack, Image image ) {
         this.place = place;
         this.isPlayerBlack = isPlayerBlack;
         this.image = image;
         this.type = 'K';
         isMoved = false;
         this.rooks = new Rook[2];
+        this.points = 10;
     }
 
     /**
      * Move set array list.
      *
-     * @param table the table
+     * @param pieces the pieces
      *
      * @return the array list
      */
     @Override
-    public ArrayList<Place> moveSet(Piece[][] table) {
+    public ArrayList<Place> moveSet( ArrayList<Piece> pieces ) {
         ArrayList<Place> moves = new ArrayList<>();
         int row = this.place.getRow();
         int col = this.place.getCol();
@@ -72,34 +77,39 @@ public class King implements Piece {
                 if (i + row < 0 || j + col < 0 || i + row >= 8 || j + col >= 8) {
                     continue;
                 }
-                if (table[i + row][col + j] == null || table[i + row][j + col].getPlayerBlack() != this.isPlayerBlack) {
-                    moves.add(new Place(row + i, col + j));
+                Place place = new Place(i + row, col + j);
+                Piece piece = GeneralPiece.findPieceByPlace(pieces, place);
+                if (piece == null || piece.getPlayerBlack() != this.isPlayerBlack) {
+                    moves.add(place);
                 }
             }
         }
         if (!this.isMoved) {
-            if (table[row][0] != null && table[row][0].getType() == 'R') {
-                Rook rook = (Rook) table[row][0];
+            Place rook1Place = new Place(this.place.getRow(), 0);
+            Place rook2Place = new Place(this.place.getRow(), 7);
+            Piece piece1 = GeneralPiece.findPieceByPlace(pieces, rook1Place);
+            Piece piece2 = GeneralPiece.findPieceByPlace(pieces, rook2Place);
+            if (piece1 != null && piece1.getType() == 'R') {
+                Rook rook = (Rook) piece1;
                 if (!rook.getIsMoved() && rook.getPlayerBlack() == this.isPlayerBlack) {
                     boolean isPossible = true;
                     for (int i = 1; i < col; i++) {
-                        if (table[row][i] != null) {
+                        if (GeneralPiece.findPieceByPlace(pieces, new Place(row, i)) != null) {
                             isPossible = false;
                             break;
                         }
                     }
                     if (isPossible) {
-                        this.rooks[0] = rook;
                         moves.add(new Place(row, 2));
                     }
                 }
             }
-            if (table[row][7] != null && table[row][7].getType() == 'R') {
-                Rook rook = (Rook) table[row][7];
+            if (piece2 != null && piece2.getType() == 'R') {
+                Rook rook = (Rook) piece2;
                 if (!rook.getIsMoved()) {
                     boolean isPossible = true;
                     for (int i = 7; i > col; i--) {
-                        if (table[row][i] != null) {
+                        if (GeneralPiece.findPieceByPlace(pieces, new Place(row, i)) != null) {
                             isPossible = false;
                             break;
                         }
@@ -150,7 +160,7 @@ public class King implements Piece {
      * @param placeToGo the place to go
      */
     @Override
-    public void move(Place placeToGo) {
+    public void move( Place placeToGo ) {
         if (placeToGo.getCol() == 2) {
             if (this.place.getCol() == 4) {
                 this.rooks[0].move(new Place(this.place.getRow(), 3));
@@ -166,12 +176,22 @@ public class King implements Piece {
     }
 
     /**
+     * Gets points.
+     *
+     * @return the points
+     */
+    @Override
+    public double getPoints() {
+        return this.points;
+    }
+
+    /**
      * Render piece.
      *
      * @param graphics the graphics
      */
     @Override
-    public void renderPiece(Graphics graphics) {
+    public void renderPiece( Graphics graphics ) {
         int row = this.place.getRow();
         int col = this.place.getCol();
         graphics.drawImage(this.image, col * Setting.CELL_WIDTH + 15, row * Setting.CELL_HEIGHT, null);

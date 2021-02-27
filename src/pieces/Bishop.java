@@ -27,6 +27,10 @@ public class Bishop implements Piece {
      * The Image.
      */
     private final Image image;
+    /**
+     * The Points.
+     */
+    private double points;
 
     /**
      * Instantiates a new Bishop.
@@ -35,78 +39,24 @@ public class Bishop implements Piece {
      * @param isPlayerBlack the is player black
      * @param image         the image
      */
-    public Bishop(Place place, Boolean isPlayerBlack, Image image) {
+    public Bishop( Place place, Boolean isPlayerBlack, Image image ) {
         this.place = place;
         this.isPlayerBlack = isPlayerBlack;
         this.image = image;
         this.type = 'B';
+        this.points = 3.3;
     }
 
     /**
      * Move set array list.
      *
-     * @param table the table
+     * @param pieces the pieces
      *
      * @return the array list
      */
     @Override
-    public ArrayList<Place> moveSet(Piece[][] table) {
-        ArrayList<Place> places = new ArrayList<>();
-        int row = this.place.getRow();
-        int col = this.place.getCol();
-        for (int i = 1; i < 8; i++) {
-            if (row + i >= 8 || col + i >= 8) {
-                break;
-            }
-            if (table[row + i][col + i] == null) {
-                places.add(new Place(row + i, col + i));
-            } else {
-                if (table[row + i][col + i].getPlayerBlack() != this.isPlayerBlack) {
-                    places.add(new Place(row + i, col + i));
-                }
-                break;
-            }
-        }
-        for (int i = 1; i < 8; i++) {
-            if (row - i < 0 || col - i < 0) {
-                break;
-            }
-            if (table[row - i][col - i] == null) {
-                places.add(new Place(row - i, col - i));
-            } else {
-                if (table[row - i][col - i].getPlayerBlack() != this.isPlayerBlack) {
-                    places.add(new Place(row - i, col - i));
-                }
-                break;
-            }
-        }
-        for (int i = 1; i < 8; i++) {
-            if (row - i < 0 || col + i >= 8) {
-                break;
-            }
-            if (table[row - i][col + i] == null) {
-                places.add(new Place(row - i, col + i));
-            } else {
-                if (table[row - i][col + i].getPlayerBlack() != this.isPlayerBlack) {
-                    places.add(new Place(row - i, col + i));
-                }
-                break;
-            }
-        }
-        for (int i = 1; i < 8; i++) {
-            if (row + i >= 8 || col - i < 0) {
-                break;
-            }
-            if (table[row + i][col - i] == null) {
-                places.add(new Place(row + i, col - i));
-            } else {
-                if (table[row + i][col - i].getPlayerBlack() != this.isPlayerBlack) {
-                    places.add(new Place(row + i, col - i));
-                }
-                break;
-            }
-        }
-        return places;
+    public ArrayList<Place> moveSet( ArrayList<Piece> pieces ) {
+        return GeneralPiece.goDiagnoseLine(pieces, this);
     }
 
     /**
@@ -145,8 +95,18 @@ public class Bishop implements Piece {
      * @param place the place
      */
     @Override
-    public void move(Place place) {
+    public void move( Place place ) {
         this.place = new Place(place.getRow(), place.getCol());
+    }
+
+    /**
+     * Gets points.
+     *
+     * @return the points
+     */
+    @Override
+    public double getPoints() {
+        return 0;
     }
 
     /**
@@ -155,7 +115,7 @@ public class Bishop implements Piece {
      * @param graphics the graphics
      */
     @Override
-    public void renderPiece(Graphics graphics) {
+    public void renderPiece( Graphics graphics ) {
         int row = this.place.getRow();
         int col = this.place.getCol();
         graphics.drawImage(this.image, col * Setting.CELL_WIDTH + 15, row * Setting.CELL_HEIGHT, null);

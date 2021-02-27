@@ -1,12 +1,16 @@
 import pieces.GeneralPiece;
+import utlity.GameGraphics;
+import utlity.Move;
 import utlity.Piece;
 import utlity.Place;
 import utlity.Setting;
-import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * The type Main.
@@ -55,6 +59,24 @@ public class Main {
         Display display = new Display(Setting.WIDTH, Setting.HEIGHT, "Chess");
         pieces = GeneralPiece.initPieces();
         selectedPiece = null;
+        display.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped( KeyEvent keyEvent ) {
+                if (keyEvent.getKeyChar() == 'p') {
+                    int h = 0;
+                }
+            }
+
+            @Override
+            public void keyPressed( KeyEvent keyEvent ) {
+
+            }
+
+            @Override
+            public void keyReleased( KeyEvent keyEvent ) {
+
+            }
+        });
         display.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked( MouseEvent mouseEvent ) {
@@ -66,8 +88,9 @@ public class Main {
                 int row = y / Setting.CELL_HEIGHT;
                 int col = x / Setting.CELL_WIDTH;
                 if (selectedPiece != null) {
-                    if (tryToMove(row, col)) {
+                    if (tryToMove(row, col, selectedPiece, pieces)) {
                         selectedPiece = null;
+                        isWhiteTurn = !isWhiteTurn;
                         return;
                     }
                 }
@@ -101,37 +124,89 @@ public class Main {
     }
 
     /**
+     * Mini max double.
+     *
+     * @param depth  the depth
+     * @param isMax  the is max
+     * @param pieces the pieces
+     *
+     * @return the double
+     */
+    public static double miniMax( int depth, boolean isMax, ArrayList<Piece> pieces ) {
+        if (depth == 0) {
+            return GeneralPiece.evaluate(pieces, isMax);
+        }
+        ArrayList<Piece> copyList = GeneralPiece.copyList(pieces);
+        if (isMax) {
+            ArrayList<Piece> blackList = GeneralPiece.getColorPieces(copyList, true);
+            double maxScore = Double.NEGATIVE_INFINITY;
+            for (Piece piece : blackList) {
+                Place oldPlace = piece.getPlace();
+                ArrayList<Place> placesToMove = piece.moveSet(copyList);
+                for (Place place : placesToMove) {
+                    Piece pieceEaten = GeneralPiece.findPieceByPlace(copyList, place);
+                    if (pieceEaten != null) {
+                        copyList.remove(pieceEaten);
+                    }
+                    double score = miniMax(depth - 1, false, copyList);
+                    if (score > maxScore) {
+                        maxScore = score;
+                    }
+                    piece.move(oldPlace);
+                    if (pieceEaten != null) {
+                        copyList.add(pieceEaten);
+                    }
+                }
+            }
+            return maxScore;
+        }
+        double miniScore = Double.POSITIVE_INFINITY;
+        ArrayList<Piece> whiteList = GeneralPiece.getColorPieces(copyList, false);
+        for (Piece piece : whiteList) {
+            Place oldPlace = piece.getPlace();
+            ArrayList<Place> placesToMove = piece.moveSet(copyList);
+            for (Place place : placesToMove) {
+                Piece pieceEaten = GeneralPiece.findPieceByPlace(copyList, place);
+                if (pieceEaten != null) {
+                    copyList.remove(pieceEaten);
+                }
+                piece.move(place);
+                double score = miniMax(depth - 1, true, copyList);
+                if (score < miniScore) {
+                    miniScore = score;
+                }
+                piece.move(oldPlace);
+
+                if (pieceEaten != null) {
+                    copyList.add(pieceEaten);
+                }
+            }
+        }
+        return miniScore;
+    }
+
+    /**
      * Try to move boolean.
      *
-     * @param row the row
-     * @param col the col
+     * @param row           the row
+     * @param col           the col
+     * @param selectedPiece the selected piece
+     * @param pieces        the pieces
      *
      * @return the boolean
      */
-    public static boolean tryToMove( int row, int col ) {
-        Piece[][] board = GeneralPiece.getBoardPieces(pieces);
-        ArrayList<Place> places = selectedPiece.moveSet(board);
+    public static boolean tryToMove( int row, int col, Piece selectedPiece, ArrayList<Piece> pieces ) {
+        ArrayList<Place> places = selectedPiece.moveSet(pieces);
         for (Place p : places) {
             if (p.getRow() == row && p.getCol() == col) {
-                if (isWhiteTurn) {
-                    if (isItCheckOnWhite) {
-                        if (isItStillCheck(selectedPiece, p)) {
-                            return false;
-                        }
-                    }
-                } else {
-                    if (isItCheckOnBlack) {
-                        if (isItStillCheck(selectedPiece, p)) {
-                            return false;
-                        }
-                    }
+                if (GeneralPiece.isItStillCheck(pieces, selectedPiece, p)) {
+                    return false;
                 }
                 Piece piece = GeneralPiece.findPieceByPlace(pieces, p);
                 if (piece != null) {
                     pieces.remove(piece);
                 }
                 selectedPiece.move(p);
-                isWhiteTurn = !isWhiteTurn;
             }
         }
         return true;
@@ -141,15 +216,6 @@ public class Main {
      * Special moves.
      */
     private static void specialMoves() {
-       /* for (int i = 0; i < 8; i++) {
-            if (board[0][i] != null && board[0][i].getType() == 'p' && !board[0][i].getPlayerBlack()) {
-                board[0][i] = GeneralPiece.createPiece(new Place(0, i), false, 'Q');
-            }
-            if (board[7][i] != null && board[7][i].getType() == 'p' && !board[7][i].getPlayerBlack()) {
-                board[7][i] = GeneralPiece.createPiece(new Place(7, i), false, 'Q');
-            }
-
-        }*/
         for (int i = 0; i < pieces.size(); i++) {
             Piece piece = pieces.get(i);
             if (piece.getType() == 'p') {
@@ -169,59 +235,67 @@ public class Main {
         }
     }
 
-    /**
-     * Is it still check boolean.
-     *
-     * @param selectedPiece the selected piece
-     * @param selectedPlace the selected place
-     *
-     * @return the boolean
-     */
-    public static boolean isItStillCheck( Piece selectedPiece, Place selectedPlace ) {
-        Piece[][] board = GeneralPiece.getBoardPieces(pieces);
-        ArrayList<Piece> threadedPieces = new ArrayList<>();
-        for (Piece p : pieces) {
-            ArrayList<Piece> piecesThreaded = GeneralPiece.getPLacesThreaded(board, p);
-            if (piecesThreaded.isEmpty()) {
-                 continue;
-            }
-             for (Piece piece : piecesThreaded) {
-                if (piece.getType() == 'K' && selectedPiece.getPlayerBlack() == piece.getPlayerBlack()) {
-                    piecesThreaded.add(p);
-                }
-            }
-        }
-        Place oldPlace = selectedPiece.getPlace();
-        Piece pieceInOldPlace = board[selectedPlace.getRow()][selectedPlace.getCol()];
-        for (Piece piece : threadedPieces) {
-            if (piece.getPlace().equals(selectedPlace)) {
-                return false;
-            }
-
-            board[selectedPlace.getRow()][selectedPlace.getCol()] = selectedPiece;
-            ArrayList<Piece> piecesThreaded = GeneralPiece.getPLacesThreaded(board, piece);
-            for (Piece p : piecesThreaded) {
-                if (p.getType() == 'K' && selectedPiece.getPlayerBlack() == p.getPlayerBlack()) {
-                    return true;
-                }
-            }
-            board[oldPlace.getRow()][oldPlace.getCol()] = pieceInOldPlace;
-        }
-        return false;
-    }
 
     /**
      * Update.
      */
     public static void update() {
-        for (Piece value : pieces) {
-            if (value.getType() == 'N' && value.getPlayerBlack()) {
-                if (value.getPlace().getRow() == 2) {
+        Piece[][] board = GeneralPiece.getBoardPieces(pieces);
+        if (!(isWhiteTurn || isGameOver)) {
+            double maxScore = Double.NEGATIVE_INFINITY;
+            Move move = null;
+            ArrayList<Piece> copyList = GeneralPiece.copyList(pieces);
+            ArrayList<Piece> blackPieces = GeneralPiece.getColorPieces(copyList, true);
+            for (Piece piece : blackPieces) {
+                if (piece.getType() == 'p' && (piece.getPlace().getCol() == 4 || piece.getPlace().getCol() == 6)) {
                     int h = 0;
                 }
+                ArrayList<Place> places = piece.moveSet(copyList);
+                Place oldPlace = piece.getPlace();
+                for (Place place : places) {
+                    Piece pieceEaten = GeneralPiece.findPieceByPlace(copyList, place);
+                    if (pieceEaten != null) {
+                        copyList.remove(pieceEaten);
+                    }
+                    piece.move(place);
+                    double score = miniMax(3, false, GeneralPiece.copyList(pieces));
+                    if (score > maxScore) {
+                        maxScore = score;
+                        move = new Move(piece, place);
+                    }
+                    piece.move(oldPlace);
+                    if (pieceEaten != null) {
+                        copyList.add(pieceEaten);
+                    }
+                }
+
             }
-            Piece[][] board = GeneralPiece.getBoardPieces(pieces);
-            ArrayList<Piece> piecesThreaded = GeneralPiece.getPLacesThreaded(board, value);
+            if (move == null) {
+                Random random = new Random();
+                Piece randomPiece = pieces.get(random.nextInt(pieces.size()));
+                ArrayList<Place> places = randomPiece.moveSet(copyList);
+                Place randomPlace = places.get(random.nextInt(places.size()));
+                move = new Move(randomPiece, randomPlace);
+            }
+            Piece piece = move.getPieceMoving();
+            Place place = move.getPlaceToMove();
+            System.out.println("Piece: " + piece.getType());
+            System.out.println("Place: " + place.getRow() + " , " + place.getCol());
+            if (board[place.getRow()][place.getCol()] != null) {
+                pieces.remove(board[place.getRow()][place.getCol()]);
+            }
+            for (Piece p : pieces) {
+                if (GeneralPiece.isTwoPiecesEqual(p, piece)) {
+                    piece = p;
+                    break;
+                }
+            }
+            tryToMove(place.getRow(), place.getCol(), piece, pieces);
+            isWhiteTurn = true;
+            return;
+        }
+        for (Piece value : pieces) {
+            ArrayList<Piece> piecesThreaded = GeneralPiece.getPiecesThreaded(pieces, value);
             for (Piece p : piecesThreaded) {
                 if (p.getType() == 'K') {
                     if (p.getPlayerBlack()) {
@@ -231,6 +305,25 @@ public class Main {
                     }
                     break;
                 }
+            }
+        }
+
+        if ((isWhiteTurn && isItCheckOnWhite) || (!isWhiteTurn && isItCheckOnBlack)) {
+            boolean isThereAWay = false;
+            for (Piece piece : pieces) {
+                if ((isItCheckOnBlack && piece.getPlayerBlack()) || (isItCheckOnWhite && !piece.getPlayerBlack())) {
+                    ArrayList<Place> movesSet = piece.moveSet(pieces);
+                    for (Place place : movesSet) {
+                        if (!GeneralPiece.isItStillCheck(pieces, piece, place)) {
+                            isThereAWay = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!isThereAWay) {
+                isGameOver = true;
+                return;
             }
         }
         int numberOfKings = 2;
@@ -251,64 +344,6 @@ public class Main {
      * @param g the g
      */
     public static void render( Graphics g ) {
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                if ((i + j) % 2 == 0) {
-                    g.setColor(Color.WHITE);
-                } else {
-                    g.setColor(new Color(102, 51, 0));
-                }
-                g.fillRect(
-                        (i * Setting.CELL_WIDTH), (j * Setting.CELL_HEIGHT), (Setting.CELL_WIDTH - 1),
-                        (Setting.CELL_HEIGHT - 1)
-                          );
-            }
-        }
-        g.setColor(new Color(255, 0, 0, 166));
-        for (Piece piece : pieces) {
-     /*       ArrayList<Piece> piecesThreaded = GeneralPiece.getPLacesThreaded(board, pieces.get(i));
-            for (Piece p : piecesThreaded) {
-                Place place = p.getPlace();
-                int x = place.getCol() * Setting.CellWidth;
-                int y = place.getRow() * Setting.CellHeight;
-                x += Setting.CellWidth / 2;
-                y += Setting.CellHeight / 2;
-                g.fillOval(x - 35, y - 35, 70, 70);
-            }*/
-            piece.renderPiece(g);
-        }
-
-        if (selectedPiece != null && !isGameOver) {
-            int x = selectedPiece.getPlace().getCol() * Setting.CELL_WIDTH;
-            int y = selectedPiece.getPlace().getRow() * Setting.CELL_HEIGHT;
-            x += Setting.CELL_WIDTH / 2;
-            y += Setting.CELL_HEIGHT / 2;
-            g.setColor(new Color(38, 220, 238, 100));
-            g.fillOval(x - 40, y - 40, 80, 80);
-            if (selectedPiece == null) {
-                return;
-            }
-            Piece[][] board = GeneralPiece.getBoardPieces(pieces);
-            ArrayList<Place> placesToGo = selectedPiece.moveSet(board);
-            for (int i = 0; i < placesToGo.size(); i++) {
-                Place place = placesToGo.get(i);
-                int row = place.getRow();
-                int col = place.getCol();
-                x = col * Setting.CELL_WIDTH + Setting.CELL_WIDTH / 2;
-                y = row * Setting.CELL_HEIGHT + Setting.CELL_HEIGHT / 2;
-                if (GeneralPiece.findPieceByPlace(pieces, place) == null) {
-                    g.setColor(new Color(20, 20, 245, 240));
-                } else {
-
-                    g.setColor(new Color(92, 245, 9, 100));
-                }
-                g.fillOval(x - 25, y - 25, 50, 50);
-
-            }
-        }
-
-
+        GameGraphics.render(g, pieces, selectedPiece);
     }
-
-
 }

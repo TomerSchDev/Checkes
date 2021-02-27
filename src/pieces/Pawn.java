@@ -12,6 +12,10 @@ import java.util.ArrayList;
  */
 public class Pawn implements Piece {
     /**
+     * The Points.
+     */
+    private double points;
+    /**
      * The Place.
      */
     private Place place;
@@ -45,17 +49,18 @@ public class Pawn implements Piece {
         this.type = 'p';
         this.firstMove = true;
         this.image = image;
+        this.points = 1;
     }
 
     /**
      * Move set array list.
      *
-     * @param table the table
+     * @param pieces the pieces
      *
      * @return the array list
      */
     @Override
-    public ArrayList<Place> moveSet( Piece[][] table ) {
+    public ArrayList<Place> moveSet( ArrayList<Piece> pieces ) {
         ArrayList<Place> moveSet = new ArrayList<>();
         int row = this.place.getRow();
         int col = this.place.getCol();
@@ -64,23 +69,30 @@ public class Pawn implements Piece {
             advance = 1;
         }
         if (row != 0 && row != 7) {
-            if (table[row + advance][col] == null) {
-                moveSet.add(new Place(row + advance, col));
-                if (table[row + (2 * advance)][col] == null) {
-                    moveSet.add(new Place(row + (2 * advance), col));
+            Place newPlace = new Place(row + advance, col);
+            if (GeneralPiece.findPieceByPlace(pieces, newPlace) == null) {
+                moveSet.add(newPlace);
+                if (firstMove) {
+                    if (GeneralPiece.findPieceByPlace(pieces, new Place(row + (2 * advance), col)) == null) {
+                        moveSet.add(new Place(row + (2 * advance), col));
+                    }
                 }
             }
             if (col != 0) {
-                if (table[row + advance][col - 1] != null) {
-                    if (table[row + advance][col - 1].getPlayerBlack()) {
-                        moveSet.add(new Place(row + advance, col - 1));
+                Place place = new Place(row + advance, col - 1);
+                Piece piece = GeneralPiece.findPieceByPlace(pieces, place);
+                if (piece != null) {
+                    if (piece.getPlayerBlack() != this.getPlayerBlack()) {
+                        moveSet.add(place);
                     }
                 }
             }
             if (col != 7) {
-                if (table[row + advance][col + 1] != null) {
-                    if (table[row + advance][col + 1].getPlayerBlack()) {
-                        moveSet.add(new Place(row + advance, col + 1));
+                Place place = new Place(row + advance, col + 1);
+                Piece piece = GeneralPiece.findPieceByPlace(pieces, place);
+                if (piece != null) {
+                    if (piece.getPlayerBlack() != this.getPlayerBlack()) {
+                        moveSet.add(place);
                     }
                 }
             }
@@ -127,6 +139,16 @@ public class Pawn implements Piece {
     public void move( Place place ) {
         this.firstMove = false;
         this.place = place;
+    }
+
+    /**
+     * Gets points.
+     *
+     * @return the points
+     */
+    @Override
+    public double getPoints() {
+        return this.points;
     }
 
     /**
